@@ -62,6 +62,6 @@ stages:
                   --set image.repository=jetiba.azurecr.io/msgsenderapi \
                   --set image.tag=$(Build.BuildId) \
                   --set secrets.ehconnstring=$ehconnstring \
-                  --set secrets.ehname=$(EH_NAME)
+                  --set secrets.ehname=$(EH_NAME) \
                   --namespace arch-aks-sb-dotnet
               workingDirectory: '$(System.ArtifactsDirectory)'
