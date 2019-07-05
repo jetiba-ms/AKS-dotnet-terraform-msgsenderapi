@@ -1,0 +1,66 @@
+# App Starter pipeline 
+
+trigger:
+  branches:
+    include:
+    - master
+    exclude:
+    - user/*
+
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:  
+  - job: Build
+    displayName: Build job
+    pool:
+      name: 'Hosted Ubuntu 1604'
+    steps:    
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'aksregistry'
+        repository: 'msgsenderapi'
+        command: 'buildAndPush'
+        Dockerfile: 'src/Dockerfile'
+        buildContext: 'src/'
+    - task: PublishPipelineArtifact@0
+      inputs:
+        targetPath: 'src/msgsenderapi' 
+        artifactName: 'helmchart'
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy job
+    environment: test
+    pool:
+      name: 'Hosted Ubuntu 1604'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@1
+            inputs:
+              artifactName: 'helmchart'
+              downloadPath: '$(System.ArtifactsDirectory)/charts/msgsenderapi' 
+
+          - task: AzureCLI@1
+            displayName: Deploy App to the Cluster
+            inputs:
+              # Change here if you changed name for Service Connection
+              azureSubscription: 'terraformPipelineSP'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                az aks get-credentials -n $(AKS_CLUSTER_NAME) -g $(AKS_CLUSTER_RG)
+
+                ehconnstring=`az eventhubs namespace authorization-rule keys list -n RootManageSharedAccessKey --namespace-name $(EH_NS_NAME) -g $(EH_NS_RG) | jq -r .primaryConnectionString`
+                
+                helm upgrade msgsenderapi charts/msgsenderapi --install \
+                  --set image.repository=jetiba.azurecr.io/msgsenderapi \
+                  --set image.tag=$(Build.BuildId) \
+                  --set secrets.ehconnstring=$ehconnstring \
+                  --set secrets.ehname=$(EH_NAME)
+              workingDirectory: '$(System.ArtifactsDirectory)'
