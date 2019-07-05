@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: msgsenderapi
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  msgsenderapi
+    spec:
+      containers:
+        - name: msgsenderapi
+          image: jetiba/msgsenderapi
+          env:
+          - name: EventHubConnectionString
+            value: Endpoint=sb://eh1808.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=/qvo4kPVSKDTrRXqsfxq/txM1bhDhOpbE4X0w6x6jgs=
+          - name: EventHubName
+            value: eh01
+          resources:
+            limits:
+              memory: 64Mi
+              cpu: 250m
