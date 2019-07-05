@@ -50,7 +50,7 @@ stages:
             displayName: Deploy App to the Cluster
             inputs:
               # Change here if you changed name for Service Connection
-              azureSubscription: 'terraformPipelineSP'
+              azureSubscription: 'serviceprincipal'
               scriptLocation: 'inlineScript'
               addSpnToEnvironment: true
               inlineScript: |
