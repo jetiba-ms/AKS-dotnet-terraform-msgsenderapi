@@ -56,10 +56,10 @@ stages:
               inlineScript: |
                 az aks get-credentials -n $(AKS_CLUSTER_NAME) -g $(AKS_CLUSTER_RG)
 
-                ehconnstring=`az eventhubs namespace authorization-rule keys list -n RootManageSharedAccessKey --namespace-name $(EH_NS_NAME) -g $(EH_NS_RG) | jq -r .primaryConnectionString`
+                ehconnstring=`az eventhubs namespace authorization-rule keys list -n RootManageSharedAccessKey --namespace-name $(EH_NS_NAME) -g $(AKS_CLUSTER_RG) | jq -r .primaryConnectionString`
                 
                 helm upgrade msgsenderapi charts/msgsenderapi --install \
-                  --set image.repository=jetiba.azurecr.io/msgsenderapi \
+                  --set image.repository=$(ACR_NAME).azurecr.io/msgsenderapi \
                   --set image.tag=$(Build.BuildId) \
                   --set secrets.ehconnstring=$ehconnstring \
                   --set secrets.ehname=$(EH_NAME) \
